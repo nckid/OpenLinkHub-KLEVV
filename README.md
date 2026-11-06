@@ -2,7 +2,6 @@
 An open-source Linux interface for iCUE LINK hubs and other Corsair AIOs and hubs.
 Manage RGB lighting, fan speeds, system metrics, as well as keyboards, mice, and headsets via a web dashboard.
 
-![Build](https://github.com/jurkovic-nikola/OpenLinkHub/actions/workflows/go.yml/badge.svg)
 [![](https://dcbadge.limes.pink/api/server/https://discord.gg/mPHcasZRPy?style=flat)](https://discord.gg/mPHcasZRPy)
 
 **Available in other languages:** [Portuguese (Brazil)](README-pt_BR.md)
