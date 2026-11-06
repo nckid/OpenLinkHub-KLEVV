@@ -3961,16 +3961,39 @@ func (d *Device) getDevices() int {
 	if d.Debug {
 		logger.Log(logger.Fields{"serial": d.Serial, "data": fmt.Sprintf("% 2x", response)}).Info("getDevices()")
 	}
+	if len(response) < 8 {
+		logger.Log(logger.Fields{"serial": d.Serial, "length": len(response)}).Warn("getDevices() - response too short")
+		return 0
+	}
 
 	channels := response[6]
 	data := response[7:]
+
+	// The channel count in the header is not a reliable device count across
+	// firmware revisions: some hubs report a value the payload cannot hold,
+	// which used to walk the parser off the end of the response.
+	total := int(channels)
+	if maxDevices := len(data) / 8; total > maxDevices {
+		logger.Log(logger.Fields{"serial": d.Serial, "header": channels, "max": maxDevices}).Warn("getDevices() - header device count exceeds payload, clamping")
+		total = maxDevices
+	}
+
 	position := 0
 	duoPort := 1
-	for i := 1; i <= int(channels); i++ {
+	for i := 1; i <= total; i++ {
+		if position+8 > len(data) {
+			logger.Log(logger.Fields{"serial": d.Serial, "position": position, "length": len(data)}).Warn("getDevices() - truncated device list, stopping parse")
+			break
+		}
+
 		deviceIdLen := data[position+7]
 		if deviceIdLen == 0 {
 			position += 8
 			continue
+		}
+		if position+8+int(deviceIdLen) > len(data) {
+			logger.Log(logger.Fields{"serial": d.Serial, "position": position, "deviceIdLen": deviceIdLen, "length": len(data)}).Warn("getDevices() - device id overruns payload, stopping parse")
+			break
 		}
 		deviceTypeModel := data[position : position+8]
 		if deviceTypeModel[2] == 6 || deviceTypeModel[2] == 14 {
@@ -5237,14 +5260,32 @@ func (d *Device) setSoftwareMode() {
 // getLedDevices will get all connected LED data
 func (d *Device) getLedDevices() {
 	buf := d.read(modeGetLeds, nil, false, v2)
+	if len(buf) < 8 {
+		logger.Log(logger.Fields{"serial": d.Serial, "length": len(buf)}).Warn("getLedDevices() - response too short")
+		return
+	}
+
 	channels := buf[6]
 	data := buf[7:]
 
-	if d.Debug {
-		logger.Log(logger.Fields{"led-data": fmt.Sprintf("% 2x", data), "channels": channels}).Info("LED DEBUG DATA")
+	// Each channel occupies four bytes. As with getDevices(), the header count
+	// cannot be trusted on every firmware, so it is bounded by the payload.
+	totalChannels := int(channels)
+	if maxChannels := len(data) / 4; totalChannels > maxChannels {
+		logger.Log(logger.Fields{"serial": d.Serial, "header": channels, "max": maxChannels}).Warn("getLedDevices() - header channel count exceeds payload, clamping")
+		totalChannels = maxChannels
 	}
 
-	for i := 1; i <= int(channels); i++ {
+	if d.Debug {
+		logger.Log(logger.Fields{"led-data": fmt.Sprintf("% 2x", data), "channels": totalChannels}).Info("LED DEBUG DATA")
+	}
+
+	for i := 1; i <= totalChannels; i++ {
+		if i*4+4 > len(data) {
+			logger.Log(logger.Fields{"serial": d.Serial, "channel": i, "length": len(data)}).Warn("getLedDevices() - truncated led list, stopping parse")
+			break
+		}
+
 		var numLEDs uint16 = 0
 		connected := binary.LittleEndian.Uint16(data[i*4:i*4+2]) == 2
 		if connected {
