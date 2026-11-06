@@ -46,6 +46,7 @@ type TemperatureProbe struct {
 type Devices struct {
 	ChannelId          int     `json:"channelId"`
 	DeviceId           int     `json:"deviceId"`
+	Address            byte    `json:"address"`
 	Sku                string  `json:"sku"`
 	Size               uint8   `json:"size"`
 	MemoryType         int     `json:"memoryType"`
@@ -117,6 +118,7 @@ type Device struct {
 	queue             chan map[int][]byte
 	SkuLine           string
 	RuntimeMemoryType int
+	eneControllers    map[uint8]*eneController
 	instance          *common.Device
 	supportedDevices  []SupportedDevice
 }
@@ -219,6 +221,7 @@ func Init(_, _ uint16, _, path string) *common.Device {
 		timer:             &time.Ticker{},
 		autoRefreshChan:   make(chan struct{}),
 		enhancementKits:   make(map[byte]bool, 8),
+		eneControllers:    make(map[uint8]*eneController),
 		Path:              path,
 		RuntimeMemoryType: mt,
 	}
@@ -229,6 +232,9 @@ func Init(_, _ uint16, _, path string) *common.Device {
 	d.loadRgb()            // Load RGB
 	d.loadDeviceProfiles() // Load all device profiles
 	count := d.getDevices()
+	if eneEnabled() {
+		count += d.getEneDevices()
+	}
 	if count == 0 {
 		return nil // Nothing found
 	}
@@ -327,7 +333,7 @@ func (d *Device) Stop() {
 				static[i] = []byte{0, 0, 0}
 			}
 			buffer := rgb.SetColor(static)
-			d.transfer(buffer, colorAddresses[k], d.Devices[k].LedChannels, d.Devices[k].ColorRegister)
+			d.transfer(buffer, d.Devices[k].Address, d.Devices[k].LedChannels, d.Devices[k].ColorRegister)
 		}
 	}
 
@@ -722,6 +728,7 @@ func (d *Device) getDevices() int {
 					device := &Devices{
 						ChannelId:         i,
 						DeviceId:          i,
+						Address:           colorAddresses[i],
 						Sku:               dimmInfo,
 						MemoryType:        d.RuntimeMemoryType,
 						LedChannels:       uint8(metadata.LedChannels),
@@ -1211,7 +1218,7 @@ func (d *Device) setDeviceColor() {
 			static[i] = []byte{byte(0), byte(0), byte(0)}
 		}
 		buffer = rgb.SetColor(static)
-		d.transfer(buffer, colorAddresses[k], d.Devices[k].LedChannels, d.Devices[k].ColorRegister)
+		d.transfer(buffer, d.Devices[k].Address, d.Devices[k].LedChannels, d.Devices[k].ColorRegister)
 		time.Sleep(5 * time.Millisecond)
 	}
 
@@ -1269,7 +1276,7 @@ func (d *Device) setDeviceColor() {
 				}
 			}
 			buffer = rgb.SetColor(static)
-			d.transfer(buffer, colorAddresses[k], d.Devices[k].LedChannels, d.Devices[k].ColorRegister)
+			d.transfer(buffer, d.Devices[k].Address, d.Devices[k].LedChannels, d.Devices[k].ColorRegister)
 			time.Sleep(10 * time.Millisecond)
 		}
 		return
@@ -1289,7 +1296,8 @@ func (d *Device) setDeviceColor() {
 				return
 			default:
 				buff := make([]byte, 0)
-				for _, k := range keys {
+				for _, unit := range d.renderUnits(keys) {
+					k := unit.keys[0]
 					rgbCustomColor := true
 					profile := d.GetRgbProfile(d.Devices[k].RGB)
 					if profile == nil {
@@ -1306,7 +1314,7 @@ func (d *Device) setDeviceColor() {
 					}
 
 					r := rgb.New(
-						int(d.Devices[k].LedChannels),
+						unit.channels,
 						rgbModeSpeed,
 						nil,
 						nil,
@@ -1379,7 +1387,7 @@ func (d *Device) setDeviceColor() {
 					case "off":
 						{
 							off := map[int][]byte{}
-							for i := 0; i < int(d.Devices[k].LedChannels); i++ {
+							for i := 0; i < unit.channels; i++ {
 								off[i] = []byte{0, 0, 0}
 							}
 							buff = rgb.SetColor(off)
@@ -1495,7 +1503,15 @@ func (d *Device) setDeviceColor() {
 						}
 					}
 
-					d.writeColor(buff, k)
+					offset := 0
+					for _, channelId := range unit.keys {
+						length := int(d.Devices[channelId].LedChannels) * 3
+						if offset+length > len(buff) {
+							break
+						}
+						d.writeColor(buff[offset:offset+length], channelId)
+						offset += length
+					}
 				}
 				time.Sleep(20 * time.Millisecond)
 			}
@@ -1508,7 +1524,7 @@ func (d *Device) writeColor(data []byte, deviceId int) {
 	if d.DeviceProfile.OpenRGBIntegration {
 		return
 	}
-	d.transfer(data, colorAddresses[deviceId], d.Devices[deviceId].LedChannels, d.Devices[deviceId].ColorRegister)
+	d.transfer(data, d.Devices[deviceId].Address, d.Devices[deviceId].LedChannels, d.Devices[deviceId].ColorRegister)
 }
 
 // writeColorEx will write data to the device from OpenRGB client
@@ -1596,7 +1612,7 @@ func (d *Device) startQueueWorker() {
 
 			for _, channelId := range keys {
 				data := packetMap[channelId]
-				d.transfer(data, colorAddresses[channelId], d.Devices[channelId].LedChannels, d.Devices[channelId].ColorRegister)
+				d.transfer(data, d.Devices[channelId].Address, d.Devices[channelId].LedChannels, d.Devices[channelId].ColorRegister)
 				_ = channelId
 			}
 			d.deviceLock.Unlock()
@@ -2211,6 +2227,15 @@ func (d *Device) calculateChecksum(data []byte) byte {
 func (d *Device) transfer(buffer []byte, address, ledDevices byte, colorRegister uint8) uint16 {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
+
+	// ENE controllers use a different transport and a different colour order.
+	// The buffer is handed over untouched: the frame encoder lives in ene.go.
+	if controller, ok := d.eneControllers[address]; ok {
+		if err := controller.WriteFrame(buffer); err != nil {
+			logger.Log(logger.Fields{"error": err, "address": address}).Error("Unable to write ENE frame")
+		}
+		return 0
+	}
 
 	// RGB
 	var buf []byte
