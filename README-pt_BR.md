@@ -53,31 +53,6 @@ $ sudo install -m 755 OpenLinkHub /opt/OpenLinkHub/OpenLinkHub
 $ sudo systemctl start OpenLinkHub
 ```
 
-## Instalação (automática)
-1. Baixe o pacote .deb ou .rpm da versão mais recente, dependendo da sua distribuição Linux
-2. Abra o terminal
-3. Navegue para a pasta onde o pacote foi baixado
-```bash
-# Baseado em Debian (deb)
-$ sudo apt install ./OpenLinkHub_?.?.?_amd64.deb
-
-# Baseado em RPM (rpm)
-$ sudo dnf install ./OpenLinkHub-?.?.?-1.x86_64.rpm
-```
-
-## Instalação (PPA)
-```bash
-$ sudo add-apt-repository ppa:jurkovic-nikola/openlinkhub
-$ sudo apt update
-$ sudo apt-get install openlinkhub
-```
-
-## Instalação (Copr)
-```bash
-$ sudo dnf copr enable jurkovic-nikola/OpenLinkHub
-$ sudo dnf install OpenLinkHub
-```
-
 ## Instalação (manual)
 ### 1. Requisitos
 - libudev-dev
@@ -101,36 +76,25 @@ $ sudo dnf install pkg-config
 Você também pode usar o devcontainer fornecido para o VScode. Isso é útil para distribuições imutáveis.
 ### 2. Compilar & instalar
 ```bash
-$ git clone https://github.com/jurkovic-nikola/OpenLinkHub.git
+$ git clone https://github.com/nckid/OpenLinkHub-KLEVV.git OpenLinkHub
 $ cd OpenLinkHub/
 $ CGO_CFLAGS_ALLOW='-fno-strict-overflow' go build .
 $ chmod +x install.sh
 $ sudo ./install.sh
 ```
 
-### 3. Instalação a partir de build compilado
-```bash
-# Baixe o build mais recente de https://github.com/jurkovic-nikola/OpenLinkHub/releases/latest
-$ wget "https://github.com/jurkovic-nikola/OpenLinkHub/releases/latest/download/OpenLinkHub_$(curl -s https://api.github.com/repos/jurkovic-nikola/OpenLinkHub/releases/latest | jq -r '.tag_name')_amd64.tar.gz"
-$ tar xf OpenLinkHub_?.?.?_amd64.tar.gz
-$ cd /home/$USER/OpenLinkHub/
-$ chmod +x install.sh
-$ sudo ./install.sh
-```
-### 4. Distribuições imutáveis (Bazzite OS, SteamOS, etc...)
+O diretório precisa ser clonado como `OpenLinkHub`; o `install.sh` o copia para `/opt/OpenLinkHub`.
+
+### 3. Distribuições imutáveis (Bazzite OS, SteamOS, etc...)
 ```bash
 # Não instale pacotes RPM ou DEB em distribuições imutáveis, eles não funcionarão.
 # O mesmo procedimento pode ser seguido para atualizar uma instalação existente.
-# Baixe o tar.gz mais recente da página de Release, ou use o seguinte comando para baixar a versão mais recente.
-$ wget "https://github.com/jurkovic-nikola/OpenLinkHub/releases/latest/download/OpenLinkHub_$(curl -s https://api.github.com/repos/jurkovic-nikola/OpenLinkHub/releases/latest | jq -r '.tag_name')_amd64.tar.gz"
+# Compile em uma máquina com os requisitos instalados, ou dentro do devcontainer fornecido.
+$ git clone https://github.com/nckid/OpenLinkHub-KLEVV.git OpenLinkHub
+$ cd OpenLinkHub/
+$ CGO_CFLAGS_ALLOW='-fno-strict-overflow' go build .
 
-# Extraia o pacote para seu diretório home
-$ tar xf OpenLinkHub_?.?.?_amd64.tar.gz -C /home/$USER/
-
-# Vá para a pasta extraída
-$ cd /home/$USER/OpenLinkHub
-
-# Torne install-user-space.sh executável
+# Copie o diretório OpenLinkHub resultante para o host imutável, depois:
 $ chmod +x install-user-space.sh
 
 # Execute install-user-space.sh. Digite sua senha para sudo quando solicitado para copiar o arquivo 99-openlinkhub.rules
@@ -143,13 +107,13 @@ $ systemctl reboot
 $ systemctl status --user OpenLinkHub.service
 ```
 
-### 5. Utilisation
+### 4. Uso
 ```bash
 sudo systemctl start OpenLinkHub.service
 xdg-open http://127.0.0.1:27003
 ```
 
-### 6. Configuração
+### 5. Configuração
 `/opt/OpenLinkHub/config.json`
 ```json
 {
@@ -220,7 +184,7 @@ xdg-open http://127.0.0.1:27003
 - motherboardBiosOnExit: Alterna os conectores PWM para o modo BIOS quando o programa é encerrado.
 - appMonitor: Ativar ou desativar a integração de aplicativos.
 
-### 7. Interface de Aplicativo Web Progressiva (PWA)
+### 6. Interface de Aplicativo Web Progressiva (PWA)
 A interface web suporta instalação como aplicativo web progressivo (PWA). Com um navegador suportado, isso permite que a interface apareça como um aplicativo independente.
 Navegadores baseados em Chromium suportam PWAs, Firefox atualmente não.
 GNOME 'Web,' também conhecido como 'Epiphany' é uma boa opção para PWAs em sistemas GNOME.

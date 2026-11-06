@@ -54,31 +54,6 @@ $ sudo install -m 755 OpenLinkHub /opt/OpenLinkHub/OpenLinkHub
 $ sudo systemctl start OpenLinkHub
 ```
 
-## Installation (automatic)
-1. Download either .deb or .rpm package from the latest Release, depending on your Linux distribution
-2. Open a terminal
-3. Navigate to the folder where the package is downloaded
-```bash
-# Debian-Based (deb)
-$ sudo apt install ./OpenLinkHub_?.?.?_amd64.deb 
-
-# RPM-based (rpm)
-$ sudo dnf install ./OpenLinkHub-?.?.?-1.x86_64.rpm
-```
-
-## Installation (PPA)
-```bash
-$ sudo add-apt-repository ppa:jurkovic-nikola/openlinkhub
-$ sudo apt update
-$ sudo apt-get install openlinkhub
-```
-
-## Installation (Copr)
-```bash
-$ sudo dnf copr enable jurkovic-nikola/OpenLinkHub
-$ sudo dnf install OpenLinkHub
-```
-
 ## Installation (manual)
 ### 1. Requirements
 - libudev-dev
@@ -102,55 +77,44 @@ $ sudo dnf install pkg-config
 Or use the provided devcontainer in VScode. This is useful for immutable distributions.
 ### 2. Build & install
 ```bash
-$ git clone https://github.com/jurkovic-nikola/OpenLinkHub.git
+$ git clone https://github.com/nckid/OpenLinkHub-KLEVV.git OpenLinkHub
 $ cd OpenLinkHub/
 $ CGO_CFLAGS_ALLOW='-fno-strict-overflow' go build .
 $ chmod +x install.sh
 $ sudo ./install.sh
 ```
 
-### 3. Installation from compiled build
-```bash
-# Download latest build from https://github.com/jurkovic-nikola/OpenLinkHub/releases/latest
-$ wget "https://github.com/jurkovic-nikola/OpenLinkHub/releases/latest/download/OpenLinkHub_$(curl -s https://api.github.com/repos/jurkovic-nikola/OpenLinkHub/releases/latest | jq -r '.tag_name')_amd64.tar.gz"
-$ tar xf OpenLinkHub_?.?.?_amd64.tar.gz
-$ cd /home/$USER/OpenLinkHub/
-$ chmod +x install.sh
-$ sudo ./install.sh
-```
-### 4. Immutable distributions (Bazzite OS, SteamOS, etc...)
+The directory must be cloned as `OpenLinkHub`; `install.sh` copies it to `/opt/OpenLinkHub`.
+
+### 3. Immutable distributions (Bazzite OS, SteamOS, etc...)
 ```bash
 # Do not install RPM or DEB packages on immutable distributions, they will not work.
 # This same procedure may be followed to update an existing installation.
-# Download the latest tar.gz from the Release page, or use the following command to download the latest release.
-$ wget "https://github.com/jurkovic-nikola/OpenLinkHub/releases/latest/download/OpenLinkHub_$(curl -s https://api.github.com/repos/jurkovic-nikola/OpenLinkHub/releases/latest | jq -r '.tag_name')_amd64.tar.gz"
+# Build on a machine with the requirements installed, or inside the provided devcontainer.
+$ git clone https://github.com/nckid/OpenLinkHub-KLEVV.git OpenLinkHub
+$ cd OpenLinkHub/
+$ CGO_CFLAGS_ALLOW='-fno-strict-overflow' go build .
 
-# Extract the package to your home directory
-$ tar xf OpenLinkHub_?.?.?_amd64.tar.gz -C /home/$USER/
-
-# Go to the extract folder
-$ cd /home/$USER/OpenLinkHub
-
-# Make install-user-space.sh executable
+# Copy the resulting OpenLinkHub directory to the immutable host, then:
 $ chmod +x install-user-space.sh
 
 # Run install-user-space.sh. Enter your password for sudo when asked to copy 99-openlinkhub.rules file
 $ ./install-user-space.sh
 
-# Restart 
+# Restart
 $ systemctl reboot
 
 # Check if service is running
 $ systemctl status --user OpenLinkHub.service
 ```
 
-### 5. Usage (non-immutable distributions)
+### 4. Usage (non-immutable distributions)
 ```bash
 sudo systemctl start OpenLinkHub.service
 xdg-open http://127.0.0.1:27003
 ```
 
-### 6. Configuration
+### 5. Configuration
 `/opt/OpenLinkHub/config.json`
 ```json
 {
@@ -221,7 +185,7 @@ xdg-open http://127.0.0.1:27003
 - motherboardBiosOnExit: Switch PWM headers to BIOS mode when program exits.
 - appMonitor: Enable or disable Application Integration.
 
-### 7. Progressive Web App (PWA) UI
+### 6. Progressive Web App (PWA) UI
 The web UI supports installation as a progressive web app (PWA). With a supported browser, this allows the UI to appear as a standalone application.
 Chromium-based browsers support PWAs; Firefox currently does not.
 GNOME 'Web,' also known as 'Epiphany', is a good option for PWAs on GNOME systems.
