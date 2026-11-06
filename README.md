@@ -191,6 +191,7 @@ xdg-open http://127.0.0.1:27003
 - decodeMemorySku: set to false to manually define `memorySku` value.
 - memorySku: Memory part number, e.g. (CMT64GX5M2B5600Z40)
 - You can find the memory part number by running the following command: `sudo dmidecode -t memory | grep 'Part Number'`
+- ENE-based modules (e.g. KLEVV CRAS V RGB) need none of the SKU settings above: they are detected automatically on the configured SMBus and use the same i2c permissions as Corsair modules. When more than one is present, they are driven as a single continuous LED strip. See [memory configuration](docs/memory-configuration.md#ene-based-modules-klevv-cras-v-rgb-and-similar).
 - logFile: custom location for logging. Default is empty.
   - Defining `-` for logFile will send all logs to standard console output.
   - If you change the location of logging, make sure the application username has permission to write to that folder.

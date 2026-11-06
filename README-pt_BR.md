@@ -10,7 +10,7 @@ Gerencie iluminação RGB, velocidades de ventiladores, métricas do sistema, be
 - Interface web acessível em `http://localhost:27003`
 - Controle coolers AIO, ventiladores, hubs, bombas, LCDs e iluminação RGB
 - Gerencie teclados, mouses e headsets
-- Suporte para memória DDR4 e DDR5
+- Suporte para memória DDR4 e DDR5, incluindo módulos RGB baseados em ENE, como o KLEVV CRAS V RGB
 - Perfis de ventiladores personalizados, sensores de temperatura e editor RGB
 - Se precisar de menu na bandeja do sistema - https://github.com/jurkovic-nikola/openlinkhub-tray
 - XENEON EDGE App - https://github.com/jurkovic-nikola/openlinkhub-xeneon
@@ -190,6 +190,7 @@ xdg-open http://127.0.0.1:27003
 - decodeMemorySku: defina como false para definir manualmente o valor `memorySku`.
 - memorySku: Número da peça da memória, ex. (CMT64GX5M2B5600Z40)
 - Você pode encontrar o número da peça da memória executando o comando: `sudo dmidecode -t memory | grep 'Part Number'`
+- Módulos baseados em ENE (ex. KLEVV CRAS V RGB) não precisam das configurações de SKU acima: são detectados automaticamente no SMBus configurado e usam as mesmas permissões i2c dos módulos Corsair. Quando há mais de um, eles são controlados como uma única fita de LED contínua. Veja [configuração de memória](docs/memory-configuration_pt-BR.md).
 - logFile: localização personalizada para logging. Padrão é vazio.
   - Definir `-` para logFile enviará todos os logs para saída padrão do console.
   - Se alterar a localização do logging, certifique-se de que o nome de usuário da aplicação tenha permissão para escrever nessa pasta.

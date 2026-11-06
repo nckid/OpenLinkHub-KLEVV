@@ -82,6 +82,18 @@ sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
 
+### ENE-based modules (KLEVV CRAS V RGB and similar)
+
+Some RGB DDR5 modules use an ENE controller instead of the Corsair SMBus protocol. These are detected automatically on the SMBus configured in `memorySmBus` and need no manual setup:
+
+- No `memorySku` or `decodeMemorySku` is required, and neither is used for them.
+- The controller answers on addresses `0x70`-`0x77`, so a pair of modules typically appears as `0x71` and `0x73` in `i2cdetect`. Detection is limited to boards where no Corsair module was found, so a Corsair kit is never affected.
+- Module temperature is read from the SPD hub (e.g. `spd5118`) via hwmon, the same as Corsair DDR5, so `ramTempViaHwmon` applies here too.
+- Each module is reported with its own LED count, but when more than one module is present the effect is rendered across all of them as one continuous strip.
+- The same `98-corsair-memory.rules` permission rule is used; only the `KERNEL=="i2c-15"` device name needs to match your SMBus.
+
+Note that ENE modules are handed to software control at startup. Their built-in effect is not written to NVRAM, so a power cycle restores the factory rainbow until OpenLinkHub starts again.
+
 ### Restart OpenLinkHub service
 ```bash
 sudo systemctl restart OpenLinkHub.service
