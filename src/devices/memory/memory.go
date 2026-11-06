@@ -232,7 +232,10 @@ func Init(_, _ uint16, _, path string) *common.Device {
 	d.loadRgb()            // Load RGB
 	d.loadDeviceProfiles() // Load all device profiles
 	count := d.getDevices()
-	if eneEnabled() {
+	if count == 0 {
+		// ENE modules carry no Corsair-style vendor string, so the discovery
+		// above cannot see them. Probe the ENE addresses only when nothing was
+		// found, so a Corsair kit is never exposed to the extra traffic.
 		count += d.getEneDevices()
 	}
 	if count == 0 {

@@ -10,7 +10,6 @@ import (
 	"OpenLinkHub/src/logger"
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 )
 
@@ -37,13 +36,6 @@ const (
 )
 
 var eneAddresses = []uint8{0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77}
-
-// eneEnabled reports whether the ENE DRAM path is active. It stays opt-in while
-// the transport is being validated, so a stock build keeps its existing
-// discovery behaviour and only touches the ENE addresses when asked to.
-func eneEnabled() bool {
-	return strings.TrimSpace(os.Getenv("OPENLINKHUB_ENE_POC")) != ""
-}
 
 // eneSwapWord reverses a register's bytes. SMBus word data is transmitted low
 // byte first, while the controller expects the register's high byte first, so
