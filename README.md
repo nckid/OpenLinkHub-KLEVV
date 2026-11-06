@@ -12,7 +12,7 @@ Manage RGB lighting, fan speeds, system metrics, as well as keyboards, mice, and
 - Web-based UI accessible at `http://localhost:27003`
 - Control AIO coolers, fans, hubs, pumps, LCDs and RGB lighting
 - Manage keyboards, mice and headsets
-- Support for DDR4 and DDR5 memory
+- Support for DDR4 and DDR5 memory (Corsair and ENE/KLEVV)
 - Custom fan profiles, temperature sensors and RGB editor
 - If you need system tray menu - https://github.com/jurkovic-nikola/openlinkhub-tray
 - XENEON EDGE App - https://github.com/jurkovic-nikola/openlinkhub-xeneon
