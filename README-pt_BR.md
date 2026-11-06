@@ -32,18 +32,26 @@ Gerencie iluminação RGB, velocidades de ventiladores, métricas do sistema, be
 - Este projeto não é um produto oficial da Corsair.
 
 ## Instalação (recomendada)
+Compile a partir do código-fonte e instale com o instalador incluído no repositório. Instale antes os [requisitos de compilação](#1-requisitos).
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jurkovic-nikola/OpenLinkHub/main/remote-install.sh | bash
+$ git clone https://github.com/nckid/OpenLinkHub-KLEVV.git OpenLinkHub
+$ cd OpenLinkHub/
+$ CGO_CFLAGS_ALLOW='-fno-strict-overflow' go build .
+$ chmod +x install.sh
+$ sudo ./install.sh
 ```
-This script will:
-- Criar um novo grupo do sistema chamado openlinkhub
-- Adicionar seu usuário atual ao grupo openlinkhub
-- Instalar o OpenLinkHub no seu diretório pessoal
-- Criar um serviço systemd de usuário
-- Copiar 99-openlinkhub.rules para /etc/udev/rules.d/
-- Iniciar o serviço após a instalação
-- Você pode usar este script para fins de instalação ou atualização
-- Antes de executar este script, desinstale quaisquer versões do OpenLinkHub instaladas anteriormente.
+O diretório precisa ser clonado como `OpenLinkHub`; o instalador o copia para `/opt/OpenLinkHub`.
+
+O `install.sh` cria o usuário de sistema `openlinkhub` caso ele não exista, instala a compilação em `/opt/OpenLinkHub`, copia `99-openlinkhub.rules` para `/etc/udev/rules.d/` e habilita e inicia o `OpenLinkHub.service`. Desinstale qualquer versão anteriormente instalada antes de continuar.
+
+Para atualizar, baixe as alterações, recompile e substitua o binário:
+```bash
+$ git pull
+$ CGO_CFLAGS_ALLOW='-fno-strict-overflow' go build .
+$ sudo systemctl stop OpenLinkHub
+$ sudo install -m 755 OpenLinkHub /opt/OpenLinkHub/OpenLinkHub
+$ sudo systemctl start OpenLinkHub
+```
 
 ## Instalação (automática)
 1. Baixe o pacote .deb ou .rpm da versão mais recente, dependendo da sua distribuição Linux
